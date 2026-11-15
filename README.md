@@ -9,28 +9,45 @@ adjust them for another box.
 
 ## Architecture
 
+```mermaid
+flowchart TB
+  user["You: claude.ai / phone<br/>(Remote Control URL)"]
+  chat["LAN agent chat<br/>mac-agent, wsl-agent"]
+
+  subgraph svc["systemd: claude-remote.service"]
+    main["Main Claude session<br/>(tmux 'claude')"]
+    mon["Background monitors<br/>gh-live (5 min) · chat listener · dispatcher events"]
+    watch["2 h watch<br/>hourly.py · open-asks.py · usage-report.py"]
+    hooks["Hooks + statusline<br/>dash/hook.py · usage history"]
+  end
+
+  sub["Subagents<br/>one per task / PR, own worktree + ledger"]
+
+  subgraph q["GPU job queue (tmux 'dispatch')"]
+    disp["dispatch.py"]
+    lanes["lanes: timing · correct · build · x86 CI"]
+  end
+
+  dash["Dashboard :8090<br/>(spark-dash)"]
+  gh["GitHub<br/>ashhart/TensorFold + fork"]
+
+  user --> main
+  chat <--> main
+  main --> mon
+  main --> watch
+  main --> hooks
+  main --> sub
+  sub -- "job files" --> disp
+  main -- "job files" --> disp
+  disp --> lanes
+  mon --> gh
+  watch --> gh
+  main -- "push · PR · reply" --> gh
+  hooks --> dash
+  main -- "board (tasks.json)" --> dash
 ```
-                       claude.ai / phone (Remote Control URL)        LAN chat (<chat-host>:3006)
-                                     |                                   ^   mac-agent, wsl-agent, user
-                                     v                                   |
- systemd: claude-remote.service -> tmux "claude" -> claude --remote-control --continue  (main session)
-     |                                   |   hooks (SubagentStart/Stop, PostToolUse) -> dash/hook.py
-     |                                   |   statusline -> usage-now.json, usage-history.jsonl
-     |                                   |
-     |            background monitors, re-armed by the session after each event:
-     |              watch/gh-live.py --once      (GitHub notifications, 5 min)
-     |              chat/listen.py --room agents (chat, 10 s)
-     |              tail of ~/notes/jobs/events.log (dispatcher events)
-     |            recurring 2 h watch: watch/hourly.py -> watch/open-asks.py, usage-report.py
-     |
-     |   subagents (one per task/PR, own git worktree, ledger ~/notes/ledger/<task>/STATUS.md)
-     |        | drop job files
-     v        v
- tmux "dispatch" -> dispatcher/dispatch.py --- lanes: timing (gpu.lock excl) | correct (shared) | build (tfb, 2 slots)
-                                           \-- x86 lane: ssh tfci@<x86-host> (host-only CI checks)
- spark-dash (transient unit) -> dash/server.py :8090  <- tasks.json (board), agents.json (hook), jobs dir, GitHub
- gpu-clock-cap.service  (nvidia-smi -lgc 0,2300 for stable benchmark clocks)
-```
+
+Not shown: `gpu-clock-cap.service` caps the GPU clock at 2300 MHz at boot so benchmark numbers stay comparable.
 
 ## The daily loop
 
