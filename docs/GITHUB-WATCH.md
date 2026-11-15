@@ -3,13 +3,21 @@
 Three layers. The first is fast and wakes the session per event; the second is a broad sweep every 2 h; the third
 is a durable ledger that says whether anything is still unanswered. Repo: `ashhart/TensorFold`, our login `jschmied`.
 
-```
-GitHub ──/notifications (5 min, If-Modified-Since)──> gh-live.py --once ──1 line──> session wakes, reads thread in full
-   │                                                                                    │ reply job / agent (prio 20+)
-   ├──per-PR comments + reviews, mentions, involves:jschmied──> hourly.py (2 h) ──┐     v
-   │                                                                              ├──> OPEN-ASKS n ──> 0 or owned
-   └──graphql: open threads involving us──────────────────> open-asks.py ─────────┘        ^
-                                                               open-asks.py done ID ───────┘ (answered / not ours / tracked)
+```mermaid
+flowchart LR
+  gh["GitHub"]
+  live["gh-live.py --once<br/>notifications, every 5 min"]
+  hourly["hourly.py<br/>2 h watch"]
+  asks["open-asks.py<br/>open threads ledger"]
+  wake["Session wakes,<br/>reads the thread in full"]
+  reply["Reply job or agent<br/>(prio 20+)"]
+  goal(["OPEN-ASKS: 0 or owned"])
+  gh -- "new comment" --> live --> wake --> reply
+  gh -- "comments, reviews, mentions" --> hourly
+  gh -- "threads involving us" --> asks
+  hourly --> goal
+  asks --> goal
+  reply -- "open-asks.py done ID" --> asks
 ```
 
 ## (a) gh-live.py: the live feed
