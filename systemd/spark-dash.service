@@ -1,0 +1,22 @@
+# PROPOSAL, not installed. Today spark-dash is a TRANSIENT unit made with
+#   sudo systemd-run --unit=spark-dash --uid=1000 --gid=1000 -p Restart=always -p RestartSec=5 \
+#        --setenv=HOME=/home/jschmied /usr/bin/python3 -u /home/jschmied/notes/dash/server.py
+# which is gone after a reboot. This persistent unit is the same thing.
+# LAN only (ufw: allow 8090/tcp from <lan-subnet>), no auth: never put secrets on the board.
+[Unit]
+Description=Spark dashboard (job queue, task board, PR state) on :8090
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jschmied
+Group=jschmied
+Environment=HOME=/home/jschmied
+Environment=PATH=/home/jschmied/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/python3 -u /home/jschmied/notes/dash/server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

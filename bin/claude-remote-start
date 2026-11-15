@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Start Claude Code in a detached tmux session with Remote Control enabled.
+#
+# Remote Control needs an interactive session, and systemd gives a service no
+# terminal, so tmux provides the PTY. It also means the session can be attached
+# from a local shell later: `tmux attach -t claude`.
+set -euo pipefail
+
+SESSION="${CLAUDE_TMUX_SESSION:-claude}"
+WORKDIR="${CLAUDE_WORKDIR:-/home/jschmied/git/dgx-spark-setup-guide}"
+NAME="${CLAUDE_RC_NAME:-$(hostname)}"
+
+# --continue resumes the most recent conversation in WORKDIR. To pin one exact
+# conversation instead, set CLAUDE_RESUME to its session id.
+if [ -n "${CLAUDE_RESUME:-}" ]; then
+  RESUME=(--resume "$CLAUDE_RESUME")
+else
+  RESUME=(--continue)
+fi
+
+tmux has-session -t "$SESSION" 2>/dev/null && { echo "session $SESSION already running"; exit 0; }
+
+cd "$WORKDIR"
+tmux new-session -d -s "$SESSION" -c "$WORKDIR" \
+  claude --dangerously-skip-permissions --remote-control "$NAME" "${RESUME[@]}"
+
+for i in $(seq 1 30); do
+  tmux has-session -t "$SESSION" 2>/dev/null && { echo "started $SESSION in $WORKDIR as '$NAME'"; exit 0; }
+  sleep 1
+done
+echo "tmux session $SESSION did not come up" >&2
+exit 1

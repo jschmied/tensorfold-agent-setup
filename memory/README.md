@@ -1,0 +1,97 @@
+# Memory index
+
+Claude Code auto-memory files about the TensorFold agent workflow and house rules, copied from
+`~/.claude/projects/<project>/memory/`. Model-experiment memories (vLLM, DFlash, NVFP4 results) and
+project-state notes (open PR lists, TODOs) were left out. Some files are in German; they are kept as written.
+
+- [agent-brief-verify-paths.md](agent-brief-verify-paths.md) — Give subagents the exact verify script path and the new-family checklist; an agent missed v.sh and the contract_limits list
+- [analyze-failures-early.md](analyze-failures-early.md) — on long benchmark runs, triage each failed instance as it completes and act immediately — never wait for the batch to finish
+- [ask-before-download.md](ask-before-download.md) — User preference: ASK before starting any large model download; don't auto-start. Use aria2 with a 6 MB/s cap.
+- [atc-release-stale-claims.md](atc-release-stale-claims.md) — At every 2-hourly watch, check my ATC claims and release the stale ones (user 2026-11-04)
+- [audit-before-citing-notes.md](audit-before-citing-notes.md) — chronological findings files hide supersessions; before citing one publicly, check the cited finding and its forward references — the 2026-09-24 audit found ~180 of ~60
+- [bandwidth-bound-ask-discrete-gpu.md](bandwidth-bound-ask-discrete-gpu.md) — A GB10 null on a compute-side change is not a verdict when the GB10 is bandwidth-bound; ask a discrete-GPU tester
+- [bench-flush-cache-clock-cap.md](bench-flush-cache-clock-cap.md) — Every benchmark flushes the page cache before each server start; the GB10 GPU clock is capped at 2300 MHz from boot (gpu-clock-cap.service)
+- [check-field-before-expensive-steps.md](check-field-before-expensive-steps.md) — Before any expensive step (prod-down boot, source build, multi-hour download, benchmark sweep), check the field FIRST — and check OUR OWN recorded results too: 2026-09-
+- [ci-fixes-standing-go.md](ci-fixes-standing-go.md) — Standing go (2026-10-21): fix and push CI failures on our own upstream PRs without asking; run lean_check before every TF push
+- [claude-autostart-remote-control.md](claude-autostart-remote-control.md) — Claude Code startet nach Reboot per systemd in tmux, mit Remote Control und übersprungenen Berechtigungen (Unit claude-remote.service)
+- [commit-after-tests-green.md](commit-after-tests-green.md) — Commit only after tests/verification pass green — don't commit on unverified changes
+- [cuda-launch-blocking-finds-async-faults.md](cuda-launch-blocking-finds-async-faults.md) — reach for CUDA_LAUNCH_BLOCKING=1 FIRST when a CUDA fault names a kernel that makes no sense
+- [diff-against-known-good-artifact.md](diff-against-known-good-artifact.md) — Open the artifact before theorizing about it — a PR description, a release note or our own producer-side check is not the thing itself
+- [disk-swap-standing-go.md](disk-swap-standing-go.md) — Standing go (2026-11-05) to swap models off the GB10 to the PBS archive to free disk — verify both sides first, log in ~/notes/disk-swaps.log
+- [failed-jobs-are-mine.md](failed-jobs-are-mine.md) — Failed/blocked dispatcher jobs are my job to triage and fix, never an item for the user's attention
+- [finish-before-posting.md](finish-before-posting.md) — Never post a half-finished run. If part of what was offered did not get measured, finish it first — do not publish the partial result with a caveat, and never narrate m
+- [gb10-job-dispatcher.md](gb10-job-dispatcher.md) — GB10 GPU/build jobs go through ~/notes/jobs dispatcher (timing/correct/build lanes, events.log Monitor); tfb = 2 build slots + shared zig cache
+- [gb10-oom-protection.md](gb10-oom-protection.md) — GB10: cgroup memory limits CANNOT cap vLLM (GPU allocs are invisible to cgroups). SSH survives OOM via MemoryMin on ssh.service AND user.slice; swappiness 10.
+- [gb10-source-build-oom.md](gb10-source-build-oom.md) — Building CUDA/vLLM from source on GB10 hung the box via global OOM; must stop the fleet + cap BUILD_JOBS
+- [generated-scripts-sed-trap.md](generated-scripts-sed-trap.md) — Deriving a new runner script from an old one with sed replaced only the first match per line — the install applied the OLD diff while the dry-run checked the new one; w
+- [gh-live-monitor.md](gh-live-monitor.md) — Live GitHub feed for TF threads: Monitor on ~/notes/watch/gh-live.py (notifications API, every 5 min; user: "5 min is enough"), re-arm on expiry
+- [git-stash-shared-across-worktrees.md](git-stash-shared-across-worktrees.md) — git stash (refs/stash) is shared by all worktrees of a repo; parallel scripts that stash/pop in different worktrees swap each other's changes. Use a separate base worktre
+- [gpu-arms-one-lock-only.md](gpu-arms-one-lock-only.md) — measurement arms take gpu.lock only, builds take tfbuild.lock only; never hold both (starves builds, deadlocks)
+- [hf-download-aria2c.md](hf-download-aria2c.md) — For HuggingFace model downloads on the DGX/GB10 box use aria2c (not hf download); NO bandwidth cap -- the ~6 MB/s limit was lifted 2026-09-22, run every download at full 
+- [hourly-watch-since-trap.md](hourly-watch-since-trap.md) — running ~/notes/watch/hourly.py by hand advances its since-marker and hides the next cron window
+- [housekeeping-decide-myself.md](housekeeping-decide-myself.md) — Worktree/disk housekeeping on Spark and Mac — decide from our goals myself, don't ask the user line by line (11-14)
+- [hypothesis-before-experiment.md](hypothesis-before-experiment.md) — Before ANY experiment, write the hypothesis and the expected parameter RANGE. If the outcome falls outside the range, debug the measurement before interpreting it — nev
+- [journal-window-spans-boots.md](journal-window-spans-boots.md) — journalctl --since "-N min" spans server restarts, so a pre-change boot's log lines get counted as the post-change result; scope to the boot's start timestamp
+- [local-agent-chat-lxc108.md](local-agent-chat-lxc108.md) — local-agent-chat runs as a native systemd binary in PVE LXC 108 (<chat-host>:3006, DHCP), pulled from the GHCR image by digest; how to reach the PVE host
+- [long-jobs-need-detach.md](long-jobs-need-detach.md) — On the GB10 box, run long downloads/installs detached (systemd-run/tmux) — Claude Code background shells die on session teardown
+- [long-tasks-as-subagents.md](long-tasks-as-subagents.md) — User preference - run long-running jobs (conversions, multi-step checks, downloads+verification) as subagents, not in the main thread
+- [minimal-builds-verify.md](minimal-builds-verify.md) — User 2026-11-08 — run only the necessary minimum of builds/verifies; full CI set once on the final head before push
+- [ncu-full-model-oom.md](ncu-full-model-oom.md) — ncu kernel replay on a full-model process OOM-killed the GB10 (2026-10-11 reboot); profile kernels on synthetic tests only
+- [never-edit-a-running-job-file.md](never-edit-a-running-job-file.md) — Editing a queued job script while the runner is executing it corrupts bash's incremental parse; queue a NEW number instead
+- [no-cause-without-counterfactual.md](no-cause-without-counterfactual.md) — State no cause until the alternative is measured — this single habit produced 10 of 13 errors in one day, and each counterfactual cost minutes
+- [one-topic-per-post.md](one-topic-per-post.md) — Upstream posts carry one topic each — one issue/PR/comment per finding or proposal, never bundled
+- [only-shippable-work.md](only-shippable-work.md) — Only start work we can verify end to end (Spark, mac-agent, wsl-agent) or that a named tester agreed to run first; no scaffolding for families we can't run
+- [open-asks-ledger.md](open-asks-ledger.md) — Reviewer asks are tracked by ~/notes/watch/open-asks.py (in hourly.py), not in my context; mark handled by comment id
+- [overnight-queue-skill.md](overnight-queue-skill.md) — Unattended overnight work on the GB10 uses the `overnight-queue` skill — runner + watchdog + cron heartbeat; the heartbeat is the layer that matters
+- [pinned-sweep-crashed-box.md](pinned-sweep-crashed-box.md) — a sweep that allocates large PINNED arenas must be one-arena-per-PROCESS with an aborting pre-check; an in-process release-wait that times out and continues hard-reset th
+- [pkill-f-kills-own-shell.md](pkill-f-kills-own-shell.md) — pkill -f <pattern> matches the invoking shell's own command line and self-kills the tool call (exit 144); check with pgrep first, or kill by pid
+- [posting-check-thread-state-first.md](posting-check-thread-state-first.md) — Vor JEDEM Posten in einen fremden Thread dessen aktuellen Stand neu abrufen — zweimal Duplikate erzeugt, weil auf veralteten Abrufen gepostet wurde
+- [pr-ai-note-one-line.md](pr-ai-note-one-line.md) — AI note is for vLLM only (one plain line + Signed-off/Co-authored trailers); TensorFold gets NO AI line and NO tool trailers (its CONTRIBUTING forbids them)
+- [pr-branch-from-gh.md](pr-branch-from-gh.md) — Take a PR's branch from `gh pr view --json headRefName`, never from a local worktree's branch name; one worktree per PR
+- [pr-conflict-no-ci.md](pr-conflict-no-ci.md) — A TF PR whose branch conflicts with main (even CHANGELOG only) gets NO GitHub CI; open new PRs on current main
+- [pr-replies-first.md](pr-replies-first.md) — Standing order 2026-11-06 — work needed for a PR or issue reply goes ahead of all other work, including in the GPU queue
+- [push-own-repos-standing-go.md](push-own-repos-standing-go.md) — Standing go (2026-09-13) to push OUR repos and OUR fork branch after every commit; upstream posts still need a per-post go
+- [queue-chain-check-before-restart.md](queue-chain-check-before-restart.md) — Before (re)starting any runner unit, grep every runner's wait list for mutual waits — the stack1/plewait deadlock happened TWICE (4 h lost, then again on a restart)
+- [receipts-outlive-tmp.md](receipts-outlive-tmp.md) — Raw run files behind any posted number go to ~/notes/<topic>/, never /tmp — #1553 lost its receipt
+- [review-fixes-standing-go.md](review-fixes-standing-go.md) — Reviewer-requested changes AND rebases of our CONFLICTING upstream PRs are pre-approved — fix/rebase, verify, push, reply without asking
+- [search-open-prs-before-fixing.md](search-open-prs-before-fixing.md) — Before bisecting a shared symptom and again before opening a fix PR, search OPEN PRs by touched-file basename and by the symptom in plain words AND identifiers; we duplic
+- [secrets-never-on-argv.md](secrets-never-on-argv.md) — Never put a token or password in a command line — systemd-run and journald record argv forever; check gated/private before passing auth at all
+- [served-ab-orphan-server.md](served-ab-orphan-server.md) — Served A/B arms can silently hit a leftover server; check port free + own "serving" line + md5 per arm (cost #2238 a posted correction)
+- [setsid-does-not-escape-the-cgroup.md](setsid-does-not-escape-the-cgroup.md) — setsid detaches from the TERMINAL, not from the systemd cgroup — restarting claude-remote.service (KillMode=control-group) reaped my 'detached' overnight runner and wat
+- [skills-daily-loop.md](skills-daily-loop.md) — The four procedure skills in ~/.claude/skills (gb10-ab, venv-overlay, upstream-post, model-archive) — what each covers and when to invoke it instead of re-deriving the 
+- [spark-dash.md](spark-dash.md) — Live queue dashboard http://<spark-host>:8090/ (spark-dash.service, ~/notes/dash); keep ~/notes/dash/pending.md current
+- [start-unlocked-steps-standing-go.md](start-unlocked-steps-standing-go.md) — Standing go (11-09): when a merge unblocks an already-planned step, start it myself without asking
+- [subagents-for-fanout-not-for-the-thread.md](subagents-for-fanout-not-for-the-thread.md) — Use subagents freely for bounded fan-out research; keep the engineering work in one thread, because the best results come from cross-topic links a fresh agent cannot make
+- [tf-1353-ruling.md](tf-1353-ruling.md) — ashhart rulings on same-precision reorders (#1353 10-27, #1409 10-28 10:35Z FINAL) — pure move = identical SASS; deliberate reorder = own PR, judged vs float64 + placeb
+- [tf-atc-exchange.md](tf-atc-exchange.md) — TensorFold uses ATC's PR review exchange (tensorfold.dev): connect our PRs, upload A/B evidence, file benchmark requests tied to exact heads
+- [tf-atc-process.md](tf-atc-process.md) — TF since 2026-10-22: contributions coordinated via ATC (Agent Traffic Control) claims + public anonymous agent radar; adoption needs the user's decision
+- [tf-atc-standing-go.md](tf-atc-standing-go.md) — Standing go (2026-10-29) to use TensorFold's ATC board for every task — check/claim/start before work, overlap before PRs
+- [tf-changelog-is-ashharts.md](tf-changelog-is-ashharts.md) — TF (11-09): ashhart places CHANGELOG lines at landing; don't add CHANGELOG commits to PRs unless he asks
+- [tf-commit-identity-noreply.md](tf-commit-identity-noreply.md) — TensorFold commits use the GitHub noreply address 600316+jschmied@users.noreply.github.com, never the personal email
+- [tf-exact-arithmetic-choice.md](tf-exact-arithmetic-choice.md) — TF CUDA row kernels keep exactly rounded division/sqrt (same bits on every GPU) over Triton's div.full/ex2.approx speed; user decision 2026-10-13
+- [tf-gpu-validation-budget.md](tf-gpu-validation-budget.md) — TF agents share one GPU; speed A/Bs only on final branches, 2+2 repeats (3+3 only if within noise), only touched families; exactness gates unchanged
+- [tf-kernel-contract-na-lines.md](tf-kernel-contract-na-lines.md) — Since main ~df7ba29a1 (11-04), v.sh's ci log shows "failed command" for test-kernel-contract with 7 HIP "N/A … not served there" lines, yet RC=0 — pre-existing on mai
+- [tf-native-step-stale-binary.md](tf-native-step-stale-binary.md) — plain `zig build` does not rebuild zig-out/native/bin/tensorfold-native; served gates ran on a stale binary for hours
+- [tf-precision-checkpoint-rejected.md](tf-precision-checkpoint-rejected.md) — TF upstream rejected --precision checkpoint (activation-quantized mode); never propose activation quantizers as an opt-in
+- [tf-project-rules-1029.md](tf-project-rules-1029.md) — TensorFold rules re-read 2026-10-29 (AGENTS/CONTRIBUTING/docs/recipes/SKILL.md): no rebase under review, contract-runner reachability, full no-gpu CI set, ATC claim befor
+- [tf-pr-skill-handover.md](tf-pr-skill-handover.md) — TF PR work goes through the tf-pr skill; agents must end POSTED/READY/BLOCKED, pr-ready.py before every push/post
+- [tf-python-frozen.md](tf-python-frozen.md) — TensorFold's Python engine is FROZEN (2026-10-06, ashhart on #211) — no Python PR merges; future is the Zig engine
+- [tf-python-retired.md](tf-python-retired.md) — TensorFold is retiring its Python engine (2026-10-10): no tooling that imports it lands; tests need float64 references; captured Triton sets are a stopgap
+- [tf-rebase-only-on-request.md](tf-rebase-only-on-request.md) — TensorFold PRs are rebased only when ashhart asks for it (user: likely a project rule); CONFLICTING alone is no reason
+- [tf-rows-writer-io-thread.md](tf-rows-writer-io-thread.md) — TF main (2026-10-27): kept-state disk writes run on an I/O thread; tests must drain the worker, not step the queue
+- [tf-shared-code-across-families.md](tf-shared-code-across-families.md) — TF: BEFORE implementing, check what can be shared (core/lanes, across families AND Metal/CUDA); no per-backend copies
+- [tf-shared-kernels-simple-optimal.md](tf-shared-kernels-simple-optimal.md) — Rule (user 2026-10-25): TF shared CUDA/Metal kernels are as simple and fast as possible; never keep a family's old summation order or other legacy restrictions just for b
+- [tf-throttle-new-fronts.md](tf-throttle-new-fronts.md) — TF PR limit REMOVED 2026-10-13 — post finished, verified work without capping how many of ours are open
+- [usage-limit-99.md](usage-limit-99.md) — 7-day usage limit is 99 % (2026-10-29); work stops at 98 %, the last 1 % is reserved for the scheduled watch and PR replies
+- [usage-limits-readable.md](usage-limits-readable.md) — Claude's 5-hour/7-day usage limits are readable at ~/.claude/usage-now.json (written by the status line script)
+- [usage-no-throttle-by-projection.md](usage-no-throttle-by-projection.md) — User 11-09 - don't throttle or warn on projected usage; only absolute d7 >= 90 % matters
+- [verify-before-push.md](verify-before-push.md) — The standing push-after-every-change go does NOT license pushing code that has not been run; syntax-checking and testing a helper in isolation are not verification
+- [verify-checksums-not-sizes.md](verify-checksums-not-sizes.md) — Verify HF downloads with lfs.sha256, never file size; a size-correct corrupt shard produces fluent garbage that is invariant to every config change
+- [verify-guards-on-empty-output.md](verify-guards-on-empty-output.md) — a readability/liveness check that passes on EMPTY output is no check; prove the guard sees data, not that a command exits 0
+- [watch-read-every-comment.md](watch-read-every-comment.md) — The watch must list every non-self comment on every open PR of ours; never tail/grep its output. Reviewer asks sat 11 h unseen on 2026-11-06
+- [watch-tagged-check.md](watch-tagged-check.md) — hourly.py prints TAGGED lines for unanswered comments on threads that involve us; answer them (user 2026-11-04)
+- [work-autonomously-to-completion.md](work-autonomously-to-completion.md) — Aufträge selbstständig bis zum vollständigen Abschluss bearbeiten; nicht "Soll ich weitermachen?" fragen; angekündigte nächste Schritte sofort ausführen; nur bei ec
+- [worktree-cleanup-check-users.md](worktree-cleanup-check-users.md) — Before removing TF worktrees, grep job scripts, ledger tools and running processes for the path — a merged PR's worktree can still be a tool dependency
+- [worktree-name-drafter-trap.md](worktree-name-drafter-trap.md) — A TF worktree path containing "drafter" fails server/benchmark_run_test.zig:196 (bare-word check on output with temp paths)
+- [write-short-by-default.md](write-short-by-default.md) — Default to SHORT for answers and upstream posts — the user has repeatedly had to ask ('tldr if possible', 'short and on point'); apply the ladder without being told
+- [zig-cache-partial-prune-poisons.md](zig-cache-partial-prune-poisons.md) — deleting zig-local/o entries alone poisons the cache (FileNotFound, not a rebuild); wipe whole dir under both tfb slot locks; v.sh now exits nonzero on any failed step

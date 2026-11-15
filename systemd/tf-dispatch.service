@@ -1,0 +1,31 @@
+# PROPOSAL, not installed. Today the dispatcher runs in tmux session "dispatch" as a shell restart loop:
+#   tmux new -d -s dispatch 'while :; do python3 -u ~/notes/jobs/dispatch.py >> ~/notes/jobs/dispatch.out 2>&1; sleep 5; done'
+# and does not come back after a reboot (AFTER-REBOOT.md step 2 is manual). This unit replaces that loop.
+#
+# KillMode=process: jobs run in their own sessions (start_new_session=True). With the default
+# control-group kill, `systemctl restart tf-dispatch` would also kill every running GPU job. With
+# KillMode=process only the dispatcher dies; the next instance reports the survivors as ORPHAN.
+# Prefer the PAUSE file for planned restarts (see dispatcher/README.md).
+[Unit]
+Description=GB10 job dispatcher (timing/correct/build/x86 lanes)
+After=network-online.target gpu-clock-cap.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jschmied
+Group=jschmied
+Environment=HOME=/home/jschmied
+Environment=PATH=/home/jschmied/bin:/home/jschmied/.local/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=/home/jschmied/notes/jobs
+# gpu.lock and the tfb slot locks live in /tmp/claude-1000: the unit must see the real /tmp.
+ExecStartPre=/usr/bin/mkdir -p /tmp/claude-1000
+ExecStart=/usr/bin/python3 -u /home/jschmied/notes/jobs/dispatch.py
+StandardOutput=append:/home/jschmied/notes/jobs/dispatch.out
+StandardError=inherit
+KillMode=process
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

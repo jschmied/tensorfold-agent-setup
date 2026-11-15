@@ -1,0 +1,26 @@
+[Unit]
+Description=Claude Code with Remote Control, in a detached tmux session
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Remote Control needs an interactive session and a service has no terminal, so
+# tmux supplies the PTY. The wrapper stays in the foreground for as long as the
+# tmux session lives, which is what keeps systemd from tearing the cgroup down.
+Type=simple
+User=jschmied
+Group=jschmied
+WorkingDirectory=/home/jschmied/git/dgx-spark-setup-guide
+Environment=HOME=/home/jschmied
+Environment=PATH=/home/jschmied/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=CLAUDE_TMUX_SESSION=claude
+Environment=CLAUDE_WORKDIR=/home/jschmied/git/dgx-spark-setup-guide
+# Pin one conversation instead of the newest by adding, via drop-in:
+#   Environment=CLAUDE_RESUME=<session-id>
+ExecStart=/home/jschmied/.local/bin/claude-remote-run
+ExecStop=/usr/bin/tmux kill-session -t claude
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

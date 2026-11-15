@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# tfb CMD...: run a TensorFold build in one of two build slots, with the shared Zig cache.
+# Slot 0 is the old tfbuild.lock, so plain `flock tfbuild.lock` users still exclude slot 0.
+# A slot starts only with MemAvailable >= TFB_MEM_GB (default 24). Gives up after TFB_WAIT_S (default 3600).
+set -u
+L=/tmp/claude-1000
+export ZIG_LOCAL_CACHE_DIR=${ZIG_LOCAL_CACHE_DIR:-$HOME/.cache/zig-local}
+# A nested call (v.sh under a build job) already holds a slot: run in it.
+[ -n "${TFB_SLOT:-}" ] && exec "$@"
+need=${TFB_MEM_GB:-24}; end=$(( $(date +%s) + ${TFB_WAIT_S:-3600} ))
+while :; do
+  avail=$(awk '/MemAvailable/{print int($2/1048576)}' /proc/meminfo)
+  if [ "$avail" -ge "$need" ] && flock -s -n /tmp/claude-1000/gpu.lock true; then
+    for s in $L/tfbuild.lock $L/tfbuild.1.lock; do
+      exec 8>>"$s"
+      if flock -n 8; then export TFB_SLOT=$s; exec "$@"; fi
+      exec 8>&-
+    done
+  fi
+  [ "$(date +%s)" -ge "$end" ] && { echo "tfb: no build slot within ${TFB_WAIT_S:-3600}s" >&2; exit 75; }
+  n=$(( ${n:-0} + 1 )); [ $(( n % 60 )) -eq 0 ] && echo "tfb: waiting for a build slot, $(( n / 12 )) min (MemAvailable ${avail} GB)" >&2
+  sleep 5
+done

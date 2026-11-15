@@ -1,0 +1,13 @@
+[Unit]
+Description=Cap the GB10 GPU clock at 2300 MHz (stable benchmark clock, less power and heat)
+After=nvidia-persistenced.service
+Wants=nvidia-persistenced.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/nvidia-smi -lgc 0,2300
+ExecStop=/usr/bin/nvidia-smi -rgc
+
+[Install]
+WantedBy=multi-user.target

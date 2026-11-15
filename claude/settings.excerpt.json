@@ -1,0 +1,54 @@
+{
+  "hooks": {
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/notes/dash/hook.py start",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/notes/dash/hook.py stop",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/notes/dash/hook.py post",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "atc@atc-github": true
+  },
+  "extraKnownMarketplaces": {
+    "atc-github": {
+      "source": {
+        "source": "github",
+        "repo": "ashhart/ATC"
+      }
+    }
+  },
+  "skipDangerousModePermissionPrompt": true
+}

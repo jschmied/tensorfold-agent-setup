@@ -1,0 +1,10 @@
+[
+  {"group": "agents", "key": "kv-p3", "title": "KV paging step 3 for family X", "owners": ["kv-p3"],
+   "prefixes": ["kvp3-"], "ledger": "kv-p3", "branch": "kv-p3-paged", "prs": [], "issues": [2444],
+   "goal": "core", "now": "build + contract jobs queued", "now_at": "2026-11-15T10:00:00Z",
+   "next": ["A-B-B-A timing", "pr-ready", "READY"], "eta": "2026-11-15T16:00"},
+  {"group": "review", "key": "sampler", "title": "Shared sampler kernel", "prs": [2606],
+   "note": "waiting for maintainer review"},
+  {"group": "planned", "key": "kv-p4", "title": "KV paging step 4", "after": ["kv-p3", "#2606"]},
+  {"group": "go", "key": "dl-model", "title": "Download checkpoint Y (40 GB)", "now": "needs the user's go"}
+]

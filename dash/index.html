@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spark Queue</title>
+<link rel="icon" href="/logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080c15;--panel:#111a2a;--panel2:#0c1322;--line:#2b384d;--ink:#f1f4fa;--muted:#adb9cc;--gold:#ead2a1;--ice:#b8d9f2;
+--bad:#f08a7e;--ok:#9fd8a8;--run:#7fc4ff;--mono:"DM Mono",ui-monospace,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Manrope,Arial,sans-serif}
+a{color:var(--ice);text-decoration:none}a:hover{text-decoration:underline}
+.mut{color:var(--muted)}.mono{font-family:var(--mono);font-size:12.5px}
+header{position:sticky;top:0;z-index:5;background:rgba(8,12,21,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);
+ display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+.brand{display:flex;align-items:center;gap:9px;color:#edf4ff;font-size:21px;font-weight:800;letter-spacing:-1.1px;text-decoration:none}
+.brand:hover{text-decoration:none}.brand img{width:30px;height:30px;transform:scale(1.18)}.brand .dot{color:#a6d4fa}
+.brand .sp{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-left:4px}
+.live{font-family:var(--mono);font-size:12.5px;color:var(--muted)}.live i{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+main{max-width:1320px;margin:0 auto;padding:18px 20px 40px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer}
+.kpi:hover{border-color:var(--ice)}
+.kpi .v{font-size:22px;font-weight:800;line-height:1.1}.kpi .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.kpi .s{font-size:12px;color:var(--muted);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.card h2{font-size:14px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline;font-weight:700}
+.card h2 span{font-weight:400;color:var(--muted);font-size:12px}
+.gantt .row{display:grid;grid-template-columns:minmax(120px,190px) 1fr 52px;gap:10px;align-items:center;padding:1px 4px;border-radius:6px;cursor:pointer}
+.gantt .row:hover{background:var(--panel2)}
+.gantt .nm{font-family:var(--mono);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gantt .tr{position:relative;height:12px;background:var(--panel2);border-radius:4px}
+.gantt .tr i{position:absolute;top:0;bottom:0;border-radius:4px}
+.gantt .eta{font-family:var(--mono);font-size:12px;color:var(--gold);text-align:right}
+.axis{display:grid;grid-template-columns:minmax(120px,190px) 1fr 52px;gap:10px;font-family:var(--mono);font-size:11px;color:var(--muted);padding:0 4px 4px}
+.axis div{display:flex;justify-content:space-between}
+i.l-build{background:#8b9bb4;opacity:.75}i.l-timing{background:var(--gold);opacity:.85}i.l-correct{background:var(--ok);opacity:.8}i.l-x86{background:#b48ead;opacity:.8}
+i.now{opacity:1;box-shadow:0 0 0 1.5px var(--run)}
+.legend{display:flex;gap:12px;font-size:11.5px;color:var(--muted);margin:2px 4px 6px}.legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px}
+.grp h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:4px 0 6px}
+.task{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer}
+.task:hover{border-color:var(--ice)}.task .t{font-weight:600;font-size:13.5px}
+.task .m{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;align-items:center}
+.dots{display:inline-flex;gap:3px}.dots b{width:8px;height:8px;border-radius:2px;display:inline-block;background:var(--line)}
+.dots b.running{background:var(--run)}.dots b.queued{background:var(--ice);opacity:.5}.dots b.DONE{background:var(--ok)}.dots b.bad{background:var(--bad)}
+.ref{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:0 6px;cursor:pointer;white-space:nowrap}
+.k-open,.k-issue-open,.DONE{color:var(--ok)}.k-merged{color:var(--gold)}.k-closed,.bad,.FAIL,.QUIET,.TIMEOUT,.STALL,.BADJOB,.ORPHAN,.blocked{color:var(--bad)}
+.k-draft,.k-issue-closed,.queued{color:var(--muted)}.running,.START{color:var(--run)}
+.list .it{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;padding:5px 4px;border-top:1px solid var(--line);cursor:pointer;font-size:13.5px}
+.list .it:first-child{border-top:0}.list .it:hover{background:var(--panel2)}
+.list .it .x{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:0 6px}
+.tabs{display:flex;gap:6px;margin-bottom:8px}.tabs button{background:var(--panel2);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 10px;font:inherit;font-size:12px;cursor:pointer}
+.tabs button.on{color:var(--ink);border-color:var(--ice)}
+.hdl{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:3px 12px;color:var(--ice)}.hdl:hover{border-color:var(--ice);text-decoration:none}
+body.wide #side{width:min(1150px,100vw)}#deps svg{max-width:100%;height:auto}
+.dleg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted);margin-bottom:10px}.dleg b{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px;border:2px solid}
+/* sidebar */
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+#side{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);background:var(--panel);border-left:1px solid var(--line);
+ transform:translateX(100%);transition:transform .22s ease;z-index:10;display:flex;flex-direction:column}
+body.open #side{transform:none}body.open #scrim{opacity:1;pointer-events:auto}
+#side .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+#side .hd h2{margin:0;font-size:16px}#side .hd .sub{font-size:12px;color:var(--muted);font-family:var(--mono)}
+#side .close{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px}
+#side .bd{padding:14px 16px;overflow:auto;flex:1}
+dl{display:grid;grid-template-columns:120px 1fr;gap:4px 12px;font-size:13px;margin:0 0 12px}dt{color:var(--muted)}dd{margin:0;word-break:break-word}
+pre.log{background:#05080f;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:52vh;overflow:auto;white-space:pre-wrap;
+ font-family:var(--mono);font-size:12px;color:#cfd8e6;margin:0}
+h4{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);margin:14px 0 6px}
+.foot{font-size:12px;color:var(--muted);margin-top:6px}
+html,body{height:100%}body{display:flex;flex-direction:column;overflow:hidden}
+main{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;padding-bottom:16px}
+.kpis{flex:none}.board{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:14px}
+.board>.card,.col>.card{margin:0;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.col{display:grid;grid-template-rows:auto auto 1fr;gap:14px;min-height:0}.col>.card:nth-child(3){min-height:0}
+.col>.card:nth-child(3) .body{overflow-y:auto!important;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.card .body{flex:1;min-height:0;overflow:hidden}
+.more{display:block;font-size:12px;margin-top:6px;color:var(--ice)}
+.gantt .row.past{opacity:.6}.gantt .row.past .tr{background:none;height:auto}.gantt .sep{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:6px 4px 2px;border-top:1px solid var(--line);padding-top:4px}
+.gantt .body{overflow-y:auto!important;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.gtiles{display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;gap:8px;align-content:start;overflow-y:auto!important;padding-right:4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.gt{min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 10px;cursor:pointer}.gt:hover{border-color:var(--ice)}
+.gt .gh{display:flex;justify-content:space-between;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--gold);font-weight:700;margin-bottom:2px}
+.gt .gh b{color:var(--ink)}.gt.idle{cursor:default;opacity:.7}.gt.idle:hover{border-color:var(--line)}.gt .ln{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gt .ln:hover{color:var(--ice)}.gt .dots{margin-top:4px}
+.gt .ln.ag{display:grid;grid-template-columns:10px minmax(0,1fr);column-gap:7px;white-space:normal;padding:2px 0}
+.gt .ln.ag .tt2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gt .ln.ag .stx{grid-column:2;font-family:var(--mono);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.stx.run{color:var(--run)}.stx.wait{color:var(--gold)}.sd{width:8px;height:8px;border-radius:50%;margin-top:6px;background:#b5f0a8}.stx.idle{color:#b5f0a8}.sd.run{background:var(--run);box-shadow:0 0 6px var(--run)}.sd.wait{background:var(--gold)}
+.prc{display:flex;gap:14px;align-items:baseline;font-size:13px;margin-bottom:6px}.prc b{font-size:18px}
+@media (max-width:1100px){body{overflow:auto;display:block}html,body{height:auto}.board{grid-template-columns:1fr 1fr}.col{grid-column:1/-1;grid-template-columns:1fr 1fr 1fr;grid-template-rows:none}}
+@media (max-width:700px){.board,.col{grid-template-columns:1fr}}
+@media (max-width:600px){main{padding:12px 16px}.gantt .row,.axis{grid-template-columns:110px 1fr 46px}header{padding:10px 16px}}
+ol.plan{margin:4px 0 10px 18px;padding:0;font-size:12.5px;line-height:1.6}ol.plan .mut{font-size:11px}.goals{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}.goals .gl{font-size:12px;border:1px solid var(--line);border-radius:6px;padding:3px 7px;cursor:pointer}.goals .gl b{color:var(--gold)}.goals .gl i{color:var(--muted);font-style:normal;margin-left:4px}.vw{color:var(--muted);text-decoration:none}.vw.on{color:var(--text,#f1f4fa);font-weight:600;border-bottom:2px solid var(--gold)}.board.b-live{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}.board.b-plan{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}.gt .ln.ag .ad{grid-column:2;font-size:11.5px;line-height:1.45;color:#c9d2e0;margin:2px 0 6px;font-family:var(--mono)}.gt .ln.ag .ad b{color:var(--muted);font-weight:500}</style>
+</head>
+<body>
+<header><a class="brand" href="#" onclick="go('');return false"><img src="/logo.png" alt=""><span>TensorFold<span class="dot">.</span></span><span class="sp">Spark</span></a><div style="display:flex;gap:14px;align-items:center"><span class="hdl mono" id="eta" title="when every job queued now is done (estimate; jobs agents add later are not in it)"></span><span class="hdl"><a class="vw" data-v="live" href="#" onclick="setView('live');return false">Live</a> · <a class="vw" data-v="plan" href="#" onclick="setView('plan');return false">Plan</a></span><span class="hdl mono" id="aeta" title="when the running agents are done: my rough estimate per task (tasks.json eta), very vague"></span><span class="hdl mono" id="usage" title="Claude usage, refreshed every 15 min"></span><a href="#deps" class="hdl">Dependencies</a><div class="live" id="live"><i></i>connecting…</div></div></header>
+<main id="main"></main>
+<div id="scrim" onclick="go('')"></div>
+<aside id="side"><div class="hd"><div><h2 id="sh"></h2><div class="sub" id="ss"></div></div><button class="close" onclick="go('')" aria-label="close">×</button></div><div class="bd" id="sb"></div></aside>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+let S=null, prTab='open';
+const LIM={agents:8,waiting:5,review:10};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hm=t=>t?new Date(t).toTimeString().slice(0,5):'–';
+const mins=(a,b)=>Math.round((new Date(b)-new Date(a))/60000);
+const BAD=['FAIL','QUIET','TIMEOUT','ORPHAN','BADJOB'];
+const go=h=>{location.hash=h?('#'+h):'';if(!h){history.replaceState(null,'',location.pathname);route()}};
+function ghUrl(n){const r=S.refs[n];return r?r.url:`https://github.com/${S.repo}/issues/${n}`}
+function ref(n){const r=S.refs[n];const k=r?r.kind:'pr';return `<span class="ref k-${k}" title="${esc(r?r.title:'')}" onclick="event.stopPropagation();go('ref/${n}')">#${n}</span>`}
+function linkify(t){return esc(t).replace(/#(\d{3,5})/g,(m,n)=>`<a href="#ref/${n}" onclick="event.stopPropagation()">#${n}</a>`)}
+function taskStatus(i){const t=S.tasks[i];const {live,done}=taskJobs(i);
+ const run=live.filter(j=>j.state==='running'), hand=(S.outside||[]).filter(o=>t.branch&&o.branch===t.branch);
+ const q=live.filter(j=>j.state!=='running').sort((a,b)=>String(a.start||'~').localeCompare(String(b.start||'~')));
+ if(run.length||hand.length){return {k:'run',txt:[...run.map(j=>`${j.id} → ${hm(j.end)}`),...hand.map(o=>`build by hand ${o.min} min`)].join(' · ')}}
+ if(q.length){const n=q[0];const why=n.state==='blocked'?`waits on ${(n.deps||[]).join(', ')||'its ready test'}`:(n.deps||[]).length?`after ${n.deps.join(', ')}`:`queue slot`;return {k:'wait',txt:`next ${n.id} ${n.state==='blocked'?'':'~'+hm(n.start)} (${why})${q.length>1?` +${q.length-1}`:''}`}}
+ const last=done[0];return {k:'idle',txt:last?`no jobs · last ${last.id} ${last.state} ${hm(last.ended)}`:'thinking / coding, no job queued'}}
+function taskJobs(i){return {live:S.jobs.filter(j=>j.task===i),done:S.finished.filter(j=>j.task===i)}}
+
+function usageBadge(){const u=S.usage||{},e=document.getElementById('usage');if(!e||u.d7==null)return;
+ const c={ok:'#8fd18f',careful:'#e6c15a',throttle:'#e8894f',stop:'#e05c5c'}[u.state]||'#aaa';
+ e.innerHTML=`<span style="color:${c}">usage 7d ${u.d7}%</span> · ${u.rate6}%/h · reset ${esc(u.d7_reset_in||'')} · proj ${Math.round(u.projected_d7_at_reset)}%`+(u.h5!=null?` · 5h ${u.h5}%`:'');}
+function etaBadge(){const e=document.getElementById('eta');if(!e)return;const n=(S.jobs||[]).length;
+ if(!n||!S.empty){e.textContent='queue empty';return;}const m=Math.max(0,Math.round((new Date(S.empty)-new Date(S.now))/60000));
+ e.innerHTML=`queued ${n} jobs done ≈ <b>${hm(S.empty)}</b> (in ${m>=60?Math.floor(m/60)+'h ':''}${m%60}m)`;}
+function agentEta(){const e=document.getElementById('aeta');if(!e)return;
+ const xs=(S.tasks||[]).filter(t=>t.group==='agents'&&t.eta).map(t=>t.eta).sort();
+ if(!xs.length){e.textContent='';return;}const last=xs[xs.length-1],d=new Date(last);
+ e.innerHTML=`agents done ≈ <b>${d.toDateString()===new Date(S.now).toDateString()?'':'tomorrow '}${hm(last)}</b> (vague)`;}
+let VIEW=(new URLSearchParams(location.search).get('view'))||(()=>{try{return localStorage.getItem('view')}catch(e){return null}})()||'live';
+function setView(v){VIEW=v;try{localStorage.setItem('view',v)}catch(e){}render()}
+function render(){usageBadge();etaBadge();agentEta();
+ document.querySelectorAll('.vw').forEach(a=>a.classList.toggle('on',a.dataset.v===VIEW));const LIVE=VIEW!=='plan';
+ const now=new Date(S.now), end=new Date(S.empty), span=Math.max(60000,end-now);
+ const run=S.jobs.filter(j=>j.state==='running'), q=S.jobs.filter(j=>j.state!=='running');
+ const fails=S.finished.filter(j=>BAD.includes(j.state)), oks=S.finished.filter(j=>j.state==='DONE');
+ const isOpen=n=>S.refs[n]&&['open','draft'].includes(S.refs[n].kind);
+ const open=S.prs.filter(isOpen), merged=S.prs.filter(n=>S.refs[n]&&S.refs[n].kind==='merged'), closed=S.prs.filter(n=>S.refs[n]&&S.refs[n].kind==='closed');
+ const needgo=S.tasks.filter(t=>t.group==='go');
+ const more=(n,h,l)=>n>0?`<a class="more" href="#${h}">+${n} more · ${l} →</a>`:'';
+ let h=`<section class="kpis">
+ <div class="kpi" onclick="go('list/running')"><div class="l">Running</div><div class="v running">${run.length+(S.outside||[]).length}</div><div class="s">${[...run.map(j=>esc(j.id)),...(S.outside||[]).map(o=>'build '+esc(o.cwd.split('/').pop()))].join(' · ')||'idle'}</div></div>
+ <div class="kpi" onclick="go('list/queued')"><div class="l">Queued</div><div class="v">${q.length}</div><div class="s">${q.filter(j=>j.state==='blocked').length} blocked</div></div>
+ <div class="kpi" onclick="go('list/queued')"><div class="l">Queue empty</div><div class="v" style="color:var(--gold)">${hm(S.empty)}</div><div class="s">+${mins(S.now,S.empty)} min</div></div>
+ <div class="kpi" onclick="go('list/finished')"><div class="l">Done · 24 h</div><div class="v DONE">${oks.length}</div><div class="s">${S.finished.length} finished</div></div>
+ <div class="kpi" onclick="go('list/failed')"><div class="l">Failed · 24 h</div><div class="v ${fails.length?'bad':''}">${fails.length}</div><div class="s">${fails.slice(0,2).map(j=>esc(j.id)).join(' · ')||'none'}</div></div>
+ <div class="kpi" onclick="go('list/prs')"><div class="l">Open PRs</div><div class="v k-open">${open.length}</div><div class="s">${merged.length} merged · 14 d</div></div>
+ </section><section class="board ${LIVE?'b-live':'b-plan'}">`;
+ // queue: running + next ones
+if(LIVE){ const QN=9, ticks=[0,.5,1].map(f=>hm(new Date(now.getTime()+f*span)));
+ h+=`<div class="card gantt"><h2>GPU / build queue <span>now → ${hm(S.empty)}</span></h2><div class="legend"><span><b class="" style="background:var(--gold)"></b>timing (alone)</span><span><b style="background:var(--ok)"></b>correctness</span><span><b style="background:#8b9bb4"></b>build</span><span><b style="background:#b48ead"></b>x86 host</span><span><b style="box-shadow:0 0 0 1.5px var(--run)"></b>running</span></div><div class="axis"><span></span><div>${ticks.map(t=>`<span>${t}</span>`).join('')}</div><span></span></div><div class="body">`;
+ const ord=[...S.jobs].sort((a,b)=>(a.state==='running'?0:a.state==='blocked'?2:1)-(b.state==='running'?0:b.state==='blocked'?2:1)||String(a.start||'').localeCompare(String(b.start||''))||String(a.end||'').localeCompare(String(b.end||'')));
+ for(const j of ord){
+  let bar='';
+  if(j.start&&j.end){const a=Math.max(0,(new Date(j.start)-now)/span*100), w=Math.max(1.5,(new Date(j.end)-Math.max(now,new Date(j.start)))/span*100);
+   bar=`<i class="l-${j.lane} ${j.state==='running'?'now':''}" style="left:${a.toFixed(1)}%;width:${Math.min(w,100-a).toFixed(1)}%"></i>`}
+  h+=`<div class="row" onclick="go('job/${encodeURIComponent(j.id)}')" title="${esc(j.owner)}"><div class="nm ${j.state}">${esc(j.id)}</div><div class="tr">${bar}</div><div class="eta">${j.state==='blocked'?'wait':hm(j.end)}</div></div>`}
+ if(!S.jobs.length)h+='<div class="mut">queue empty</div>';
+ const fill=S.finished.slice(0,Math.max(0,25-S.jobs.length));
+ if(fill.length){h+=`<div class="sep">recently finished</div>`;for(const j of fill)h+=`<div class="row past" onclick="go('job/${encodeURIComponent(j.id)}')" title="${esc(j.owner)}"><div class="nm">${esc(j.id)}</div><div class="tr"><span class="pill ${j.state}">${j.state}</span></div><div class="eta mut">${hm(j.ended)}</div></div>`}
+ h+=`</div><a class="more" href="#list/queued">${S.jobs.length} jobs · list →</a></div>`;}
+ // work: one tile per group
+ h+=`<div class="card"><h2>${LIVE?'Agents':'Plan'} <span>${S.tasks.length} tasks · ${esc(S.updated)}</span></h2><div class="legend"><span><span class="sd run" style="display:inline-block;margin:0 4px 0 0;vertical-align:0"></span>job running in the GPU / build queue</span><span><span class="sd wait" style="display:inline-block;margin:0 4px 0 0;vertical-align:0"></span>job queued, waiting for a slot</span><span><span class="sd" style="display:inline-block;margin:0 4px 0 0;vertical-align:0"></span>agent working, no queue job</span></div>${(()=>{const G=S.goals||[];if(LIVE||!G.length)return '';const nm={agents:'run',waiting:'wait',review:'review',planned:'planned',go:'go',mac:'mac',wsl:'wsl'};
+ return `<div class="goals">`+G.map(g=>{const c={};S.tasks.filter(t=>t.goal===g.key).forEach(t=>c[t.group]=(c[t.group]||0)+1);
+  return `<span class="gl" onclick="go('goal/${g.key}')" title="${esc(g.note||'')}"><b>${esc(g.prio||'')}</b> ${esc(g.title)} <i>${Object.entries(c).map(([k,v])=>`${v} ${nm[k]||k}`).join(' · ')}</i></span>`}).join('')+`</div>`})()}<div class="body gtiles">`;
+ for(const g of S.groups){if(g.key==='go')continue;if(LIVE!==['agents','mac','wsl'].includes(g.key))continue;const ts=S.tasks.map((t,i)=>[t,i]).filter(([t])=>t.group===g.key);if(!ts.length){if(['mac','wsl'].includes(g.key))h+=`<div class="gt idle"><div class="gh"><span>${esc(g.title)}</span><b class="mut">idle</b></div></div>`;continue}
+  const live=S.jobs.filter(j=>j.task!=null&&S.tasks[j.task].group===g.key);
+  h+=`<div class="gt" onclick="go('group/${g.key}')"><div class="gh"><span>${esc(g.title)}</span><b>${ts.length}</b></div>${ts.slice(0,LIM[g.key]||3).map(([t,i])=>{if(g.key!=='agents')return `<div class="ln" onclick="event.stopPropagation();go('task/${i}')">${esc(t.title)}</div>`;const st=taskStatus(i);const ah=taskJobs(i).live.filter(j=>j.state!=='running').length+(t.next||[]).length;return `<div class="ln ag" onclick="event.stopPropagation();go('task/${i}')"><span class="sd ${st.k}"></span><span class="tt2">${esc(t.title)}</span><span class="stx ${st.k}">${esc(st.txt)}${ah?` · +${ah} ahead`:''}${t.eta?` · ≈${hm(t.eta)}`:''}</span>${LIVE?`<span class="ad">${(()=>{const {live,done}=taskJobs(i);const r=live.find(j=>j.state==='running');
+ const parts=[];if(t.now)parts.push(`<b>agent</b> ${esc(t.now)}${t.live_at?` <span class="mut">(${hm(t.live_at)})</span>`:''}`);if(r)parts.push(`<b>now</b> ${esc(r.id)} (${r.lane}, ${hm(r.start)}→${hm(r.end)})`);
+ const q=live.filter(j=>j.state!=='running');if(q.length)parts.push(`<b>queued</b> ${q.map(j=>esc(j.id)).join(', ')}`);
+ if((t.next||[]).length)parts.push(`<b>then</b> ${t.next.slice(0,3).map(esc).join(' → ')}`);
+ if(done[0])parts.push(`<b>last</b> ${esc(done[0].id)} ${done[0].state} ${hm(done[0].ended)}`);
+ if(t.note)parts.push(`<span class="mut">${esc(t.note)}</span>`);
+ if((t.prs||[]).length||(t.issues||[]).length)parts.push([...(t.prs||[]),...(t.issues||[])].map(n=>'#'+n).join(' '));
+ return parts.join('<br>')})()}</span>`:''}</div>`}).join('')}${ts.length>(LIM[g.key]||3)?`<div class="ln mut">+${ts.length-(LIM[g.key]||3)} more</div>`:''}${live.length?`<div class="dots" title="jobs: blue running · light queued">${live.slice(0,16).map(j=>`<b class="${j.state}"></b>`).join('')}</div>`:''}</div>`}
+ h+=`</div></div>`;
+ // side column
+ const att=needgo.map(t=>`<div class="it" onclick="go('task/${S.tasks.indexOf(t)}')"><span class="pill" style="color:var(--gold)">go?</span><span class="x">${esc(t.title)}</span><span></span></div>`);
+ const AN=5, recentOpen=[...open].sort((a,b)=>S.refs[b].updated.localeCompare(S.refs[a].updated)).slice(0,8);
+ if(!LIVE)h+=`<div class="col"><div class="card list"><h2>Needs your go <span>${att.length}</span></h2><div class="body">${att.slice(0,AN).join('')||'<div class="mut">nothing</div>'}</div>${more(att.length-AN,'list/go','all')}</div>
+ <div class="card list"><h2>Our PRs <span>${S.gh_at?'GitHub '+hm(S.gh_at)+' · hourly':'loading'}</span></h2>
+ <div class="prc"><a href="#list/prs-open" class="k-open"><b>${open.length}</b> open</a><a href="#list/prs-merged" class="k-merged"><b>${merged.length}</b> merged</a><a href="#list/prs-closed" class="k-closed"><b>${closed.length}</b> closed</a><span class="mut">14 d</span></div>
+ <div class="body">${recentOpen.map(n=>`<div class="it" onclick="go('ref/${n}')"><span class="ref k-${S.refs[n].kind}">#${n}</span><span class="x">${esc(S.refs[n].title)}</span><span class="mut mono">${esc(S.refs[n].updated.slice(11,16))}</span></div>`).join('')}</div><a class="more" href="#list/prs">all ${S.prs.length} PRs →</a></div>
+ <div class="card list"><h2>Recently finished <span>${oks.length} ok · ${fails.length} failed</span></h2><div class="body">${S.finished.slice(0,25).map(j=>`<div class="it" onclick="go('job/${encodeURIComponent(j.id)}')"><span class="pill ${j.state}">${j.state}</span><span class="x mono">${esc(j.id)}</span><span class="mut mono">${hm(j.ended)}</span></div>`).join('')}</div>
+ <a class="more" href="#list/finished">all ${S.finished.length} · events →</a></div></div>`;
+ h+='</section>';
+ $('#main').innerHTML=h;
+ $('#live').innerHTML=`<i></i>${new Date(S.now).toTimeString().slice(0,8)} · refresh 20 s`;
+}
+
+async function loadLog(id,el){try{const t=await (await fetch('/log/'+encodeURIComponent(id))).text();const atEnd=el.scrollTop+el.clientHeight>=el.scrollHeight-20||!el.dataset.l;
+ el.textContent=t||'(empty)';el.dataset.l=1;if(atEnd)el.scrollTop=el.scrollHeight}catch(e){}}
+
+function jobItem(j){return `<div class="it" onclick="go('job/${encodeURIComponent(j.id)}')"><span class="pill ${j.state}">${j.state}</span><span class="x mono">${esc(j.id)}</span><span class="mut mono">${j.ended?hm(j.ended):hm(j.end)}</span></div>`}
+
+function side(h){
+ const [kind,...rest]=h.split('/');const arg=decodeURIComponent(rest.join('/'));let H='',sub='',B='';
+ if(kind==='job'){const j=S.jobs.find(x=>x.id===arg)||S.finished.find(x=>x.id===arg);if(!j)return close_();
+  const t=j.task!=null?S.tasks[j.task]:null;H=j.id;sub=`${j.state} · ${j.lane} · ${j.owner}`;
+  B=`<dl><dt>state</dt><dd class="${j.state}">${j.state}</dd>`+(t?`<dt>task</dt><dd><a href="#task/${j.task}">${esc(t.title)}</a> ${(t.prs||[]).map(ref).join(' ')}</dd>`:'')+
+   (j.ended?`<dt>ended</dt><dd>${hm(j.ended)} · ${j.took??'?'} min</dd>`+(j.why?`<dt>why</dt><dd>${esc(j.why)}</dd>`:'')
+    :`<dt>start → end</dt><dd>${hm(j.start)} → ${hm(j.end)} (${Math.round(j.est)} min${j.hist?'':' guessed'})</dd><dt>waits on</dt><dd>${(j.deps||[]).map(d=>`<a href="#job/${d}">${esc(d)}</a>`).join(', ')||'–'}</dd>`)+
+   `<dt>lane / prio</dt><dd>${esc(j.lane)} / ${esc(j.prio)} · ${esc(j.mem_gb??'?')} GB · deadline ${esc(j.deadline_min??'–')} min</dd><dt>cwd</dt><dd class="mono">${esc(j.cwd)}</dd>
+   <dt>cmd</dt><dd class="mono">${esc(j.cmd)}</dd><dt>ready</dt><dd class="mono">${esc(j.ready||'–')}</dd></dl><h4>log</h4><pre class="log" id="lg">loading…</pre>`;
+  $('#sh').textContent=H;$('#ss').textContent=sub;if($('#sb').dataset.k!==h){$('#sb').innerHTML=B;$('#sb').dataset.k=h}else{const d=$('#sb dl');if(d)d.outerHTML=B.split('<h4>')[0]}
+  loadLog(j.id,$('#lg'));return open_()}
+ if(kind==='task'){const i=+arg,t=S.tasks[i];if(!t)return close_();const {live,done}=taskJobs(i);H=t.title;sub=(S.groups.find(g=>g.key===t.group)||{}).title||'';
+  const st=taskStatus(i);
+  B=`<p class="stx ${st.k}" style="font-family:var(--mono);font-size:12.5px">${st.k==='run'?'▶ running':st.k==='wait'?'⏳ waiting':'◌ idle'} · ${esc(st.txt)}</p><p>${linkify(t.note||'')}</p><dl>`+(t.branch?`<dt>branch</dt><dd class="mono">${esc(t.branch)}</dd>`:'')+
+   ((t.prs||[]).length?`<dt>PRs</dt><dd>${t.prs.map(n=>refLine(n)).join('')}</dd>`:'')+((t.issues||[]).length?`<dt>issues</dt><dd>${t.issues.map(n=>refLine(n)).join('')}</dd>`:'')+
+   (t.owners?`<dt>owners</dt><dd class="mono">${esc(t.owners.join(', '))}</dd>`:'')+`</dl>`+
+   (()=>{const q=live.filter(j=>j.state!=='running').sort((a,b)=>String(a.start||'~').localeCompare(String(b.start||'~'))),nx=t.next||[];
+     if(!q.length&&!nx.length&&!t.eta)return '';return `<h4>plan ahead${t.eta?` · done ≈ ${hm(t.eta)} (vague)`:''}</h4><ol class="plan">`+
+     q.map(j=>`<li class="mono">${esc(j.id)} <span class="mut">${j.lane} ~${hm(j.start)}</span></li>`).join('')+nx.map(x=>`<li>${esc(x)}</li>`).join('')+`</ol>`})()+
+   `<h4>queued / running · ${live.length}</h4><div class="list">${live.map(jobItem).join('')||'<span class="mut">none</span>'}</div>`+
+   `<h4>finished 24 h · ${done.length}</h4><div class="list">${done.map(jobItem).join('')||'<span class="mut">none</span>'}</div>`}
+ else if(kind==='goal'){const g=(S.goals||[]).find(x=>x.key===arg);if(!g)return close_();const ts=S.tasks.map((t,i)=>[t,i]).filter(([t])=>t.goal===arg);H=g.title;sub=`goal ${g.prio||''} · ${ts.length} tasks`;
+  B=`<p>${linkify(g.note||'')}</p><div class="list">${ts.map(([t,i])=>`<div class="it" onclick="go('task/${i}')"><span class="mut mono">${esc((S.groups.find(x=>x.key===t.group)||{}).key||'')}</span><span class="x">${linkify(t.title)}</span><span>${(t.prs||[]).map(ref).join('')}</span></div>`).join('')||'<span class="mut">no tasks yet</span>'}</div>`}
+ else if(kind==='group'){const g=S.groups.find(x=>x.key===arg);if(!g)return close_();const ts=S.tasks.map((t,i)=>[t,i]).filter(([t])=>t.group===arg);H=g.title;sub=ts.length+' tasks';
+  B=`<div class="list">${ts.map(([t,i])=>{const {live,done}=taskJobs(i);return `<div class="it" onclick="go('task/${i}')"><span class="dots" title="jobs: blue running · light queued · grey none">${live.slice(0,6).map(j=>`<b class="${j.state}"></b>`).join('')||'<b></b>'}</span><span class="x">${linkify(t.title)}</span><span>${(t.prs||[]).map(ref).join('')}</span></div>`}).join('')}</div>`}
+ else if(kind==='ref'){const n=+arg,r=S.refs[n];H='#'+n;
+  const ts=S.tasks.map((t,i)=>[t,i]).filter(([t])=>(t.prs||[]).includes(n)||(t.issues||[]).includes(n));
+  if(r){H+=' '+r.title;sub=`${r.pr?'PR':'issue'} · ${r.kind}`;B=`<dl><dt>state</dt><dd class="k-${r.kind}">${r.kind}</dd><dt>comments</dt><dd>${r.comments}</dd>
+   <dt>updated</dt><dd>${esc(r.updated.replace('T',' ').slice(0,16))} UTC</dd>`+(r.closed?`<dt>closed</dt><dd>${esc(r.closed.replace('T',' ').slice(0,16))} UTC</dd>`:'')+
+   (r.labels.length?`<dt>labels</dt><dd>${esc(r.labels.join(', '))}</dd>`:'')+`</dl>`}else{sub='not in the hourly cache'}
+  B+=`<p><a href="${ghUrl(n)}" target="_blank" rel="noopener">open on GitHub ↗</a></p>`+(ts.length?`<h4>our tasks</h4><div class="list">${ts.map(([t,i])=>`<div class="it" onclick="go('task/${i}')"><span class="pill">${esc(t.group)}</span><span class="x">${esc(t.title)}</span><span></span></div>`).join('')}</div>`:'')}
+ else if(kind==='list'){
+  if(arg==='running'&&(S.outside||[]).length){H='Running';sub='queue jobs + builds outside the queue';B=`<div class="list">${S.jobs.filter(j=>j.state==='running').map(jobItem).join('')}</div><h4>builds holding a build slot outside the queue</h4><dl>${S.outside.map(o=>`<dt>pid ${o.pid} · ${o.min} min</dt><dd class="mono">${esc(o.cwd)}<br>${esc(o.cmd)}</dd>`).join('')}</dl>`;$('#sh').textContent=H;$('#ss').textContent=sub;$('#sb').innerHTML=B;$('#sb').dataset.k=h;return open_()}
+  const L={running:['Running',S.jobs.filter(j=>j.state==='running')],queued:['Queued',S.jobs.filter(j=>j.state!=='running')],
+   finished:['Finished, last 24 h',S.finished],failed:['Failed, last 24 h',S.finished.filter(j=>BAD.includes(j.state))]};
+  if(L[arg]){H=L[arg][0];sub=L[arg][1].length+' jobs';B=`<div class="list">${L[arg][1].map(jobItem).join('')||'<span class="mut">none</span>'}</div>`}
+  else if(arg.startsWith('prs-')){const k=arg.slice(4),ns=S.prs.filter(n=>S.refs[n]&&(k==='open'?['open','draft'].includes(S.refs[n].kind):S.refs[n].kind===k));H='PRs: '+k;sub=ns.length+(k==='open'?'':' in 14 d');B=`<div class="list">${ns.map(n=>refLine(n)).join('')}</div>`}
+  else if(arg==='attention'){H='Needs attention';const f=S.finished.filter(j=>BAD.includes(j.state)),b=S.jobs.filter(j=>j.state==='blocked');sub=`${f.length} failed · ${b.length} blocked`;
+   B=`<h4>failed 24 h</h4><div class="list">${f.map(jobItem).join('')||'<span class="mut">none</span>'}</div><h4>blocked</h4><div class="list">${b.map(jobItem).join('')||'<span class="mut">none</span>'}</div><h4>needs your go</h4><div class="list">${S.tasks.map((t,i)=>[t,i]).filter(([t])=>t.group==='go').map(([t,i])=>`<div class="it" onclick="go('task/${i}')"><span class="pill" style="color:var(--gold)">go?</span><span class="x">${esc(t.title)}</span><span></span></div>`).join('')}</div>`}
+  else if(arg==='prs'){H='Our PRs';sub=`${S.prs.length} open or closed in 14 d`;B=`<div class="list">${S.prs.map(n=>refLine(n)).join('')}</div>`}
+  else if(arg==='go'){H="Needs Jürgen's go";const ts=S.tasks.map((t,i)=>[t,i]).filter(([t])=>t.group==='go');sub=ts.length+' items';
+   B=`<div class="list">${ts.map(([t,i])=>`<div class="it" onclick="go('task/${i}')"><span class="pill" style="color:var(--gold)">go?</span><span class="x">${esc(t.title)}</span><span></span></div>`).join('')}</div>`}
+  else if(arg==='events'){H='Dispatcher events';sub='last 60';B=`<div class="list">${S.events.map(e=>`<div class="it" onclick="go('job/${encodeURIComponent(e.id)}')"><span class="pill ${e.kind}">${e.kind}</span><span class="x mono">${esc(e.id)} <span class="mut">${esc(e.rest)}</span></span><span class="mut mono">${e.t.slice(0,5)}</span></div>`).join('')}</div>`}
+  else return close_()}
+ else return close_();
+ $('#sh').textContent=H;$('#ss').textContent=sub;$('#sb').innerHTML=B;$('#sb').dataset.k=h;open_()}
+function depGraph(){
+ const nodes=new Map(), edges=[], key2i={};S.tasks.forEach((t,i)=>{if(t.key)key2i[t.key]=i});
+ const prState=n=>{const r=S.refs[n];return r?r.kind:'pr'};
+ const taskDone=i=>{const t=S.tasks[i];return (t.prs||[]).length&&(t.prs||[]).every(n=>prState(n)==='merged')};
+ const nid=x=>'n'+String(x).replace(/[^A-Za-z0-9]/g,'_');
+ const resolved=d=>d.startsWith('#')?prState(+d.slice(1))==='merged':(key2i[d]!=null&&taskDone(key2i[d]));
+ const addTask=i=>{const t=S.tasks[i];const id=nid(t.key||('t'+i));if(nodes.has(id))return id;
+  const st=t.group==='agents'?taskStatus(i).k:t.group;const blocked=['planned','waiting','go'].includes(t.group)&&(t.after||[]).some(d=>!resolved(d));
+  const cls=taskDone(i)?'done':blocked?'blocked':st==='run'?'run':st==='wait'||t.group==='waiting'?'wait':t.group==='review'?'review':t.group==='planned'?'planned':'think';
+  const lbl=(t.title.length>58?t.title.slice(0,56)+'…':t.title).replace(/"/g,"'")+((t.prs||[]).length?'<br/>'+t.prs.map(n=>'#'+n+' '+prState(n)).join(' · '):'');
+  nodes.set(id,{lbl,cls,click:`task/${i}`});return id};
+ const addRef=n=>{const id=nid('#'+n);if(!nodes.has(id)){const r=S.refs[n];const k=prState(n);
+  nodes.set(id,{lbl:('#'+n+' '+(r?r.title:'')).slice(0,60).replace(/"/g,"'")+'<br/>'+k,cls:k==='merged'?'done':k==='closed'?'blocked':'review',click:`ref/${n}`})}return id};
+ S.tasks.forEach((t,i)=>{if(!(t.after||[]).length&&!S.tasks.some(u=>(u.after||[]).includes(t.key)))return;const me=addTask(i);
+  for(const d of (t.after||[])){const from=d.startsWith('#')?addRef(+d.slice(1)):(key2i[d]!=null?addTask(key2i[d]):null);if(from)edges.push([from,me,resolved(d)])}});
+ let m='flowchart LR\n';
+ for(const [id,n] of nodes)m+=`  ${id}["${n.lbl}"]:::${n.cls}\n`;
+ edges.forEach(([a,b,ok],k)=>{m+=`  ${a} ${ok?'-.->':'-->'} ${b}\n`});
+ for(const [id,n] of nodes)m+=`  click ${id} call goNode("${n.click}")\n`;
+ m+=`  classDef done fill:#2a2416,stroke:#ead2a1,color:#ead2a1\n  classDef review fill:#1f1630,stroke:#c49be8,color:#f1f4fa\n  classDef run fill:#0f2236,stroke:#7fc4ff,color:#f1f4fa,stroke-width:2px\n  classDef think fill:#13260f,stroke:#b5f0a8,color:#f1f4fa\n  classDef wait fill:#262012,stroke:#ead2a1,color:#f1f4fa,stroke-dasharray:4 3\n  classDef blocked fill:#2a1414,stroke:#f08a7e,color:#f1f4fa,stroke-width:2px\n  classDef planned fill:#111a2a,stroke:#6b7a92,color:#adb9cc,stroke-dasharray:3 3\n`;
+ return m}
+window.goNode=h=>go(h);
+async function showDeps(){$('#sh').textContent='Dependencies';$('#ss').textContent='tasks, PRs and what blocks what · click a box';
+ const leg=`<div class="dleg"><span><b style="border-color:#f08a7e"></b>blocked (planned/waiting, a dependency is open)</span><span><b style="border-color:#7fc4ff"></b>running</span><span><b style="border-color:#b5f0a8"></b>thinking / coding</span><span><b style="border-color:#ead2a1;border-style:dashed"></b>waiting</span><span><b style="border-color:#c49be8"></b>open PR / in review</span><span><b style="border-color:#ead2a1;background:#2a2416"></b>merged / done</span><span><b style="border-color:#6b7a92;border-style:dashed"></b>planned</span><span>— open dependency · ‑ ‑ resolved</span></div>`;
+ if($('#sb').dataset.k!=='deps'){$('#sb').innerHTML=leg+'<div id="deps">drawing…</div>';$('#sb').dataset.k='deps'}
+ document.body.classList.add('wide');open_();
+ try{if(!window.mermaid){$('#deps').textContent='mermaid did not load (no internet?)';return}
+  mermaid.initialize({startOnLoad:false,securityLevel:'loose',theme:'dark',flowchart:{htmlLabels:true,curve:'basis'},themeVariables:{fontFamily:'Manrope, Arial',fontSize:'13px',lineColor:'#6b7a92'}});
+  const {svg,bindFunctions}=await mermaid.render('dg'+Date.now(),depGraph());$('#deps').innerHTML=svg;if(bindFunctions)bindFunctions($('#deps'))}catch(e){$('#deps').textContent='graph error: '+e}}
+function refLine(n){const r=S.refs[n];return `<div class="it" onclick="go('ref/${n}')"><span class="ref k-${r?r.kind:'pr'}">#${n}</span><span class="x">${esc(r?r.title:'')}</span><span class="mut mono">${r?r.kind:''}</span></div>`}
+function open_(){document.body.classList.add('open')}
+function close_(){document.body.classList.remove('open');$('#sb').dataset.k=''}
+function route(){const h=location.hash.slice(1);if(!S)return;if(h==='deps')return showDeps();document.body.classList.remove('wide');if(h)side(h);else close_()}
+async function tick(){try{S=await (await fetch('/api/state')).json();render();route()}catch(e){$('#live').innerHTML='<i style="background:var(--bad)"></i>offline'}}
+addEventListener('hashchange',route);addEventListener('keydown',e=>{if(e.key==='Escape')go('')});
+tick();setInterval(tick,20000);
+</script>
+</body>
+</html>

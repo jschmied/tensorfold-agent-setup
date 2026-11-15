@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Foreground supervisor: start the tmux session, then stay alive while it lives.
+set -euo pipefail
+/home/jschmied/.local/bin/claude-remote-start
+SESSION="${CLAUDE_TMUX_SESSION:-claude}"
+while tmux has-session -t "$SESSION" 2>/dev/null; do sleep 30; done
+echo "tmux session $SESSION ended" >&2
