@@ -75,3 +75,14 @@ which stalled the next 95 GB timing job.
 - 2026-11-10 21:xx: dispatcher (active from next restart): same-prio jobs FIFO by queue-file mtime (was file-name order: rowcap-x86d starved 3 h); top_ready/drain count only timing jobs whose mem_gb+20 fits (f2-conf at 100 GB blocked all prio-5 builds 19:11-19:50).
 - 11-11: same-prio FIFO between lanes: a ready timing job holds back only builds/correct jobs queued after it at its prio (and lower prios). Replaced the drain/top_ready rule (sampler4 builds starved 18 h). Backup dispatch.py.bak-1111.
 - PAUSE file in ~/notes/jobs: nothing new starts (restart: touch PAUSE, wait for run/ empty, kill dispatcher PID, rm PAUSE).
+
+**Deadlock: a waiting timing job behind a long build (2026-11-22).** A ready timing job can't start while any
+build runs, and it holds back every build/correct job at or below its own prio. So one long build (rb-p3 sass5b,
+6 h deadline, prio 12) plus one ready timing job (adec-abba, prio 20) left the second build slot idle for hours:
+rb-lfm3-build (prio 15) never started. Check: `tail events.log` shows only the long build START for an hour and a
+build lane job is ready. Fix by hand: raise the stuck build above the waiting timing job's prio (it then uses the
+free slot; the timing job could not start anyway). Long SASS/compile sweeps belong in a quiet window or split.
+
+**Held models.** A job whose `ready` tests a model path (`test -f ~/models/X/config.json`) waits until the main
+session restores X from PBS (agents may not restore). Check `disk-swap.log` before swapping out a model a queued
+job names: `grep -l X ~/notes/jobs/q/*.json`.

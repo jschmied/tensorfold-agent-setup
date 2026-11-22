@@ -79,3 +79,7 @@ Also include the house rules: the author is `Jürgen Schmied <600316+jschmied@us
   6. Mark the ask done and add a ledger line.
 - `BLOCKED` or anything else: triage now. An agent that says "waiting" while its gates are already done has stalled; finish its work as for READY.
 - Every 2 h watch: any open ask older than 2 h whose agent has no running job is a stall, so finish it.
+
+## Related skills
+- `tf-new-family`: bringing up a new model or backend (gates, reference oracle, sizing).
+- `device-handoff`: Metal / XPU checks via mac-agent and wsl-agent.
