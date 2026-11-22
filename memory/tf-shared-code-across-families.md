@@ -22,3 +22,5 @@ sharing check BEFORE code: grep core/lanes and the other backend's (CUDA/Metal) 
 goes into core (config contract, checkpoint tensor list, table/host math, walkers, rules) vs backend-only (kernels,
 device buffers). Put the list in the plan/brief and the PR body. Trigger: DSpine Metal #2634 duplicated CUDA's
 71-tensor contract and TG-row formula (caught only after both PRs were up).
+
+**11-16 again (#2460 item 4 claim):** a survey said "no core EOS check" while `core/tokenizer/eos.zig` existed; the user's outside review caught it after posting. Before claiming a core block, grep core/ recursively (subdirs like core/tokenizer/) for the concept, and list every reader's precedence/defaults; never propose a stricter rule (e.g. "template end must be EOS") without checking a served counterexample (hf_text 248044+248046).

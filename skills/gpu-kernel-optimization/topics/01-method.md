@@ -49,3 +49,12 @@
 
 ## The benchmark's public sample is not its scored workload
 - A +6.8 % local gain on the public seed scored +0.25 % on the private prompts (cudafast edge_weight). Rank workload-dependent knobs on a generic prompt set; trust only prompt-independent gains to transfer. See 10.
+
+## Drafted-decode bound (added 2026-11-22)
+Bytes per emitted token = (verify bytes + draft bytes) ÷ accepted length a.
+- verify ≈ dense + lm_head + expert_bytes × (1 − (1 − top_k/n_experts)^(k+1)): k+1 rows read the UNION of their experts.
+- draft ≈ k × (draft layer bytes + draft head bytes); the draft head is often the largest part (a pruned head can beat an extra draft).
+- At N streams the dense weights are read once a step; the experts follow the union over all rows; KV is per stream.
+- Write this floor next to drafted tok/s, as for plain decode. Higher acceptance can still be slower: judge step time and a separately.
+- A debug build that skips work (no dequant, no epilogue) changes code generation: it is NOT a valid lower bound.
+Source: sybil-solutions/inference-optimisation-skill (MIT, read 2026-11-22), their measurements on Intel Arc/Apple, not ours: priors, not facts on the GB10.

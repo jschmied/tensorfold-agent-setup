@@ -56,3 +56,11 @@ Design, in the order the gains came from:
 - **Native FP4 decode in prompt16 (needs nvcc 13.2, sm_121a):** regroup each 32-bit word into 4 bytes (3 ops) and `cvt` them. That gives −4…−5.4 % per kernel, bit-equal.
   - Elsewhere (`nvfp4_experts`, qmmf) a same-signature swap saves 0–4 % of instructions, because the nibble regroup costs as much as `fp4pair`.
   - A real gain there needs a load-time repack that puts each value pair in one byte.
+
+## FP8 KV in prompt attention (added 2026-11-22)
+FP8 KV halved one flash-attention kernel's throughput (39 vs 69–74 TFLOPS). Dequantizing each KV block to fp16 and
+merging blocks by LSE recovered it (128K prefill 760 → 1,059 tok/s). For TF this is only usable if the merge keeps
+the existing reduction order (bit-equal to the current kernel); check before ledger row 9 work on Qwen 3.5.
+Related, matches #4337's grouped experts: a 64-row M-block that decodes each expert's weights once per tile was +7 %
+prefill, bit-exact.
+Source: sybil-solutions/inference-optimisation-skill (MIT, read 2026-11-22), their measurements on Intel Arc/Apple, not ours: priors, not facts on the GB10.

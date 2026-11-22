@@ -97,3 +97,8 @@ print("usage", sh("python3 ~/.claude/usage-report.py --json | python3 -c \"impor
 
 # Durable ask list: every non-self comment after our last reply that nobody marked handled (open-asks.py done ID).
 print(sh("python3 ~/notes/watch/open-asks.py 2>&1"))
+
+# Optimization-ledger cells marked `open [#N]` whose #N merged or closed (summary only; full list: optledger-stale.py).
+_ol = sh("python3 ~/notes/watch/optledger-stale.py --no-fetch 2>&1 | tail -1")
+if " 0 stale" not in _ol:
+    print("OPTLEDGER", _ol, "(run optledger-stale.py; ours: fix in the PR that changes them, else one sync PR)")

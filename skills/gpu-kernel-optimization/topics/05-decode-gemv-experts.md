@@ -34,3 +34,13 @@
   decode. Closed.
 - TF concurrent-round graphs: one replay saves ~4 ms/forward = 7.8 % of a round at c=2, 5.6–6.2 % at c=4.
 - PLE offload gather fully hidden (gap 0) — do not spend on PLE prefetch.
+
+## Ideas from a 3090 MoE playbook (added 2026-11-22)
+- **NVFP4 code → exact FP16 by byte permutes** (`prmt`): packed nibbles become the FP16 high bytes of the exact
+  E2M1 values, FMA order unchanged. Their decode 112.6 → 116.5 tok/s, all 200,058 logits equal at 795 positions
+  (playbook 09 "codebook lookup", ledger QP-14). Candidate for core `cuda/experts` NVFP4 decode (Inkling, Flash Next).
+- **Launch count with graphs:** 1,404 → 781 launches per token, each fusion bit-exact, router picks resolved on the
+  device and the whole token in one graph: 57 → 112 tok/s (PL-15/16). Only pays while launches are not hidden.
+- **Sampling on the device:** a 1,024-bin histogram finds the top-1,000 logits instead of copying 200,058 to the host:
+  100 → 110 tok/s, same tokens per seed (13, HD-04). Sampled decode only.
+Source: alesha-pro/inference-optimization-playbook (MIT, read 2026-11-22; RTX 3090 sm_86, many single runs; their exactness = token match or logit tolerance, not ours). Priors, not GB10 facts.

@@ -10,8 +10,8 @@ import datetime, json, os, subprocess, sys
 ME, REPO = "jschmied", "ashhart/TensorFold"
 STATE = os.path.expanduser("~/notes/watch/asks-handled.json")
 Q = """query($q:String!){search(query:$q,type:ISSUE,first:100){nodes{
- ... on PullRequest{number title url comments(last:40){nodes{databaseId author{login} createdAt body}}}
- ... on Issue{number title url comments(last:40){nodes{databaseId author{login} createdAt body}}}}}}"""
+ ... on PullRequest{number title url author{login} createdAt body comments(last:40){nodes{databaseId author{login} createdAt body}}}
+ ... on Issue{number title url author{login} createdAt body comments(last:40){nodes{databaseId author{login} createdAt body}}}}}}"""
 
 
 def load():
@@ -40,6 +40,10 @@ def main():
             continue
         cs = n["comments"]["nodes"]
         mine = max((c["createdAt"] for c in cs if (c["author"] or {}).get("login") == ME), default="")
+        # an issue/PR opened by someone else that names us in its body is an ask too (#3491 sat 9 h unseen, 11-16)
+        if (n.get("author") or {}).get("login") != ME and f"@{ME}" in (n.get("body") or "") and not mine:
+            cs = [{"databaseId": f"body-{n['number']}", "author": n["author"], "createdAt": n["createdAt"],
+                   "body": n["body"]}] + cs
         for c in cs:
             who = (c["author"] or {}).get("login", "?")
             if who == ME or c["createdAt"] <= mine or str(c["databaseId"]) in handled:

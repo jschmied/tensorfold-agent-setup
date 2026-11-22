@@ -86,6 +86,8 @@ def queued_at(j):
 
 def ready(j):
     r = j.get("ready")
+    if not isinstance(r, str):  # a non-command ready (true/1) must not crash the loop for every queued job
+        return bool(r) or r is None
     return not r or subprocess.run(r, shell=True, cwd=os.path.expanduser(j["cwd"])).returncode == 0
 
 

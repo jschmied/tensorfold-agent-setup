@@ -87,3 +87,18 @@ Receipts are in `~/notes/cudafast/<item>/REPORT.md`. The score is prefill^0.25 �
 - Two more items:
   - Running only the logits row in the prefill's last layer won independently in both challenges.
   - Draft-depth gating by cumulative acceptance also won there; TF main already has `core/draft_depth.zig`.
+
+## Verify attention, draft length by context, acceptance per depth (added 2026-11-22)
+- **Verify rows must run on the decode attention kernel.** Sending k-row verifies to the prefill kernel made the
+  step grow 3.5 ms per 1K context (47 → 104 ms at 16K). Check which kernel our verify rows hit at long context
+  (nsys kernel names at 1K vs 16K vs 64K) before tuning drafts.
+- **Best draft length moves with context and concurrency.** Theirs: 1 draft beat 3 at 128K (29.6 vs 15.5 tok/s)
+  while 3 won short; k=4 at c1, 3 at c4, 2 at c16. Our nspec sweeps were short-context: sweep long context too.
+- **Measure acceptance per depth.** One MTP head accepted ~14 % at depth 2, so its best was one draft.
+Source: sybil-solutions/inference-optimisation-skill (MIT, read 2026-11-22), their measurements on Intel Arc/Apple, not ours: priors, not facts on the GB10.
+
+## Draft length and prompt splits (added 2026-11-22)
+- GLM MTP: one draft beat the default three, 66-68 → 75.7 tok/s (playbook SD-11). Sweep 1 first on MTP heads.
+- Flash Next hybrid GDN cache: a non-canonical token split of a resent prompt re-read 30-54K tokens; compare the
+  prefix by text, not token IDs (playbook 11).
+Source: alesha-pro/inference-optimization-playbook (MIT, read 2026-11-22; RTX 3090 sm_86, many single runs; their exactness = token match or logit tolerance, not ours). Priors, not GB10 facts.

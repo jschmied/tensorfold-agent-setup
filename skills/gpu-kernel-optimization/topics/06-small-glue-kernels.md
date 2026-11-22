@@ -31,3 +31,17 @@
   decode 2/4 streams −3…−5 % vs step 2. Tiled form 659 µs vs old 562 µs at 8k rows (~29 % of fp32 peak).
   Open levers: reduce-scatter instead of final shuffles; two 256-input steps per barrier; per-row-count boundaries
   measured, keeping the old path where it wins.
+
+## Stop fusing under graphs (added 2026-11-22)
+If cutting the kernel count gives nothing with graphs on, the time is inside the big kernels: stop fusing and go
+to the dominant kernel. Ours agrees: #1603's small-kernel fusion, stream-tile prefetch and filled-item grid were all
+null on HIP (ledger rows 30-32); theirs: three correct fusions on Arc B390, 0 % each.
+Source: sybil-solutions/inference-optimisation-skill (MIT, read 2026-11-22), their measurements on Intel Arc/Apple, not ours: priors, not facts on the GB10.
+
+## Load grouping in residual mixes (added 2026-11-22)
+Inkling's attention-residual mix: each thread loads 4 states at once and sums them in the original order:
+118.4 → 121.2 tok/s, bit-exact (playbook 03, PL-19). The same grouping made their loop gates and FP16 matvec
+slower (4.9 → 24 µs): measure per kernel, never apply it as a blanket rule.
+Hy4 microbenchmarks (07): exact top-k by sampled threshold + radix fallback 203.6 → 74.5 µs; expert GEMM tile from
+the rows-per-expert histogram 2,202 → 1,989 µs; residual + hyper-connections + RMS in one kernel 924.8 → 609.0 µs.
+Source: alesha-pro/inference-optimization-playbook (MIT, read 2026-11-22; RTX 3090 sm_86, many single runs; their exactness = token match or logit tolerance, not ours). Priors, not GB10 facts.

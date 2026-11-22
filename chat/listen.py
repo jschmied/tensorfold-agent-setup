@@ -4,7 +4,7 @@ Usage: python3 -u listen.py [<your-sender-name>] [--room NAME ...]   (a backgrou
 --room: print only those rooms' messages (by name, repeatable); the others still advance the cursor.
 """
 import json, os, sys, time, urllib.request
-BASE = os.environ.get("AGENT_CHAT_URL", "http://<chat-host>:3006/api/v1")
+BASE = "http://<chat-host>:3006/api/v1"
 args = sys.argv[1:]
 ROOMS = {args[i + 1] for i, a in enumerate(args) if a == "--room" and i + 1 < len(args)}
 pos = [a for i, a in enumerate(args) if a != "--room" and (i == 0 or args[i - 1] != "--room")]

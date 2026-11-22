@@ -10,7 +10,7 @@ that taught it.
 
 ## The loop (every kernel task)
 
-1. **Bound first.** Write the floor (bytes ÷ 273 GB/s, or FLOPs ÷ peak) next to the measured time, and name the
+1. **Bound first.** Write the floor (bytes ÷ 273 GB/s, or FLOPs ÷ peak; drafted decode: the union formula in 01) next to the measured time, and name the
    binding term only after a one-knob test. Rank levers by the size of the prize, not the cost of the change. → `topics/01-method.md`
 2. **Check the field.** The best external implementation (Humming, CUTLASS, FlashInfer, a competitor PR) is the
    reference, not our last commit. Also check our own closed findings (the index below). → `topics/08-frameworks.md`
@@ -34,7 +34,7 @@ that taught it.
 | `topics/07-exactness.md` | TensorFold gates, kernel contract, SASS identity, float64 receipts, nondeterminism |
 | `topics/08-frameworks.md` | TileLang, Triton, CUTLASS, FlashInfer, DeepGEMM, FLA, Mojo: what works here, what is closed |
 | `topics/09-gpu-sharing.md` | before running anything on the GPU while agents share it |
-| `topics/10-spec-decode-engine.md` | speculative-decode engines (DFlash tree + drafter): round budget, offline acceptance sim, which levers carry to private prompts, cudafast closed items |
+| `topics/10-spec-decode-engine.md` | speculative-decode engines (DFlash tree + drafter): verify attention kernel, draft length by context, round budget, offline acceptance sim, which levers carry to private prompts, cudafast closed items |
 | `topics/11-metal-apple.md` | Metal/Mac work: M3 vs M5 (no tensor units below M5), MLX GEMM gap and how it was split, 36 GB wiring limit, quiet-Mac timing |
 
 ## Closed — do not re-run without new evidence

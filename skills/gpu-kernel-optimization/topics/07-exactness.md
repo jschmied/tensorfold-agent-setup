@@ -52,3 +52,8 @@
 - Records for nvcc 13.0 and 13.2 (13.2 overrides where registers differ). A later 13.3 record on main for a kernel you delete or rename breaks `registry_sets_test` (`UnregisteredOverride`).
 - **A contract kind must make the property observable.** One bf16 slot at weight 1 makes a combine equal to its input, so the slot order and rounding are invisible. Use the family's real slot count and dtypes (Nemotron: 8 slots, fp32 and bf16), and plant a control that breaks exactly that property (ashhart on #1353).
 - **Kernels shared across families go in a neutral header named for the shared idea**, with neutral exported names (`liquid_conv.cuh`, `tf_liquid_conv_3`; `paged_attn_segs.cuh`, `tf_paged_attn_*_64`), templated on what differs (taps, head dim). They move to `common/` once that exists on the base.
+
+## Two-turn equality (added 2026-11-22)
+A drafter change matched every token on turn 1 and diverged on turn 2: the accepted-token boundary moved by one
+position (playbook 13 HD-02, 15). Served equality for drafting changes compares at least two turns, resumed.
+Source: alesha-pro/inference-optimization-playbook (MIT, read 2026-11-22; RTX 3090 sm_86, many single runs; their exactness = token match or logit tolerance, not ours). Priors, not GB10 facts.

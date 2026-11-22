@@ -52,7 +52,7 @@ after checking q/*.json, ~/notes/ledger/*/ and lsof, and logs it in ~/notes/disk
 `"sha"` (reachable from `cwd`'s repo) and a `cmd` that calls plain `zig`; the dispatcher pushes the sha (and origin/main)
 to /srv/tf.git, runs `cmd` in a fresh worktree /srv/tf-wt/<id> (removed after; `$TF_BASE` = merge base with origin/main,
 for lean), shared cache /srv/zig-cache (pruned at 15 GB). One job at a time, no gpu.lock, no tfb slot, never drained by
-timing. Belongs there: `zig build -Dfixed-cpu test test-golden test-kernel-contract test-server-security
+timing. Belongs there: `zig build -Dfixed-cpu test-host` (GitHub CI runs it; missing it let #3294 pass x86 and fail CI, 11-15), `zig build -Dfixed-cpu test test-golden test-kernel-contract test-server-security
 test-pull-security fuzz-cortheon check-release-paths`, `zig build check-native-cuda-host compile-cuda-tests` (native
 x86, no -Dtarget), `python3 tools/pr_check.py`, lean, `zig fmt --check build.zig zig`. Stays on the GB10: anything with
 nvcc/-Dnvcc, test-cuda-host and the family -cuda-host tests, the kernel contract run on the GPU, native/served builds,

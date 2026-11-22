@@ -62,3 +62,14 @@ Example: FP8 experts read 73.6 M sectors for 49.1 M requested (1.5×) and ran at
 - nsys traced no kernels: the harness launches the worker with `env -i`, so the injection never reached it. Wrap the worker itself (`nsys profile ... "$REAL" "$@"` inside a wrapper script the harness execs).
 - Then CUPTI lost every record until `--cuda-flush-interval=500` was added. Recipe: `~/notes/cudafast/nsys/wrap.sh`.
 - **Name a phase by its kernels' shapes before attributing a gap.** I called 63 passes with ~5 ms gaps "prefill" (~7 % idle); they were the serial leg: embed grid 1, 64 ms per step, no drafter. Real prefill passes (embed grid 16–64) had 0.86 ms per 87 ms. Check the token count per pass (embed grid, GEMM M) and the leg timeline first.
+
+## Clock ramp and engine comparisons (added 2026-11-22)
+- Clock ramp-up made one kernel look 2.5× slower in a microbenchmark: interleave variants and take min-of-N per variant after a warm-up.
+- Engine vs engine (TF vs vLLM/oMLX): same card, same day, back to back; claim "B faster" only if a bootstrap 95 % CI of median(B)/median(A) lies above 1.0. Keep our paired median and "N of M slower" too.
+- With drafting, servers send several tokens per SSE chunk: count tokens from usage, never from chunks.
+Source: sybil-solutions/inference-optimisation-skill (MIT, read 2026-11-22), their measurements on Intel Arc/Apple, not ours: priors, not facts on the GB10.
+
+## Struct passed by value (added 2026-11-22)
+One extra field in a struct passed by value to a hot kernel cost 2-3 % of prefill (playbook 14, PF-15). When a
+launch-argument struct grows, time the launch, or pass a pointer.
+Source: alesha-pro/inference-optimization-playbook (MIT, read 2026-11-22; RTX 3090 sm_86, many single runs; their exactness = token match or logit tolerance, not ours). Priors, not GB10 facts.

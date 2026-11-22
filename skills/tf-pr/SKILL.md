@@ -49,6 +49,8 @@ It WARNs on:
 
 Answer each WARN in the body, or say why it doesn't apply.
 
+**After any rebase:** run `python3 ~/notes/watch/rebase-gates.py --dir <worktree> --pr N` (or `--old-head SHA`). It lists the files whose PR patch changed in the rebase (RESOLVED), what main changed under the code the PR reaches through imports and `#include` (UNDER), the matching `zig build` steps, and a per-backend verdict: host only or a device rerun. It suggests; read RESOLVED/UNDER before trusting "host only", and say in the body which gates were rerun and why.
+
 **A conflict with main:** never push a rebase unasked (`docs/recipes/SKILL.md:37`). If the conflict is in code rather than CHANGELOG.md alone, rebase into a local branch (`<branch>-next`), rerun the gates and served rows there, and keep them ready. When ashhart asks, push within minutes. A CHANGELOG-only conflict is ashhart's to resolve at landing.
 
 ## 3. Briefing an agent on a TF PR

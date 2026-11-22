@@ -59,7 +59,9 @@ Not shown: `gpu-clock-cap.service` caps the GPU clock at 2300 MHz at boot so ben
 | Agent chat | 10 s poll | `chat/listen.py spark-agent --room agents` | `memory/local-agent-chat-lxc108.md` |
 | GPU / build jobs | event driven | `dispatcher/dispatch.py`, `dispatcher/README.md` | [PIPELINES](docs/PIPELINES.md) |
 | Board | on every agent/PR event | `skills/spark-board`, `dash/check.py` | [PIPELINES](docs/PIPELINES.md) |
-| PRs | per task | `skills/tf-pr`, `watch/pr-ready.py` | [PIPELINES](docs/PIPELINES.md) |
+| PRs | per task | `skills/tf-pr`, `watch/pr-ready.py` (checks against the PR's own base branch) | [PIPELINES](docs/PIPELINES.md) |
+| After a rebase | per rebased PR | `watch/rebase-gates.py --dir WT --pr N`: resolved files, main's changes under the PR, which gates rerun per backend | `skills/tf-pr` |
+| Optimization ledger | each watch | `watch/optledger-stale.py`: `open [#N]` cells whose PR merged or closed | [GITHUB-WATCH](docs/GITHUB-WATCH.md) |
 | Usage budget | before fan-out, each watch | `claude/usage-report.py --json` | `skills/usage-self-management` |
 
 Order of priority: replies to reviewers first (`memory/pr-replies-first.md`), then running work, then new work.

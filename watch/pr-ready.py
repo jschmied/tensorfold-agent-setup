@@ -53,21 +53,24 @@ def main():
     ap.add_argument("--dir")
     ap.add_argument("--body")
     ap.add_argument("--reply")
+    ap.add_argument("--base", help="base branch (default: the PR's base, else main)")
     a = ap.parse_args()
     pr = {}
     if a.pr:
-        pr = json.loads(sh(f"gh pr view {a.pr} -R {REPO} --json headRefName,headRefOid,body,isDraft"))
+        pr = json.loads(sh(f"gh pr view {a.pr} -R {REPO} --json headRefName,headRefOid,body,isDraft,baseRefName"))
     d = a.dir or (pr and find_dir(pr["headRefName"], pr["headRefOid"]))
     if not d:
         raise SystemExit("pr-ready: no worktree found; pass --dir")
-    sh("git fetch -q origin main", d)
+    base = a.base or (pr.get("baseRefName") if pr else None) or "main"
+    sh(f"git fetch -q origin {base}", d)
+    ob = f"origin/{base}"
     head = sh("git rev-parse HEAD", d).strip()
-    main = sh("git rev-parse origin/main", d).strip()
+    main = sh(f"git rev-parse {ob}", d).strip()
     if pr and pr["headRefOid"] != head:
         warns.append(f"local HEAD {head[:9]} != PR head {pr['headRefOid'][:9]} (push pending, or wrong worktree)")
 
     # 1. merge with main (we rebase only when asked; this says whether the ask is coming)
-    mt = subprocess.run("git merge-tree --write-tree --name-only origin/main HEAD", cwd=d, shell=True,
+    mt = subprocess.run(f"git merge-tree --write-tree --name-only {ob} HEAD", cwd=d, shell=True,
                         capture_output=True, text=True, env={**os.environ, "LC_ALL": "C"})
     if mt.returncode:
         files = sorted(set(re.findall(r"Merge conflict in (\S+)", mt.stdout)))[:6]
@@ -75,7 +78,7 @@ def main():
                      "(no rebase unless ashhart asks; rerun evidence when he does)")
 
     # 2. commits: author, trailers, no CHANGELOG, no .sh, line width of added lines
-    mb = sh("git merge-base origin/main HEAD", d).strip()
+    mb = sh(f"git merge-base {ob} HEAD", d).strip()
     for line in sh(f"git log --format='%h%x09%ae%x09%(trailers:only,unfold)' {mb}..HEAD", d).splitlines():
         h, ae, *tr = line.split("\t")
         if ae != AUTHOR:

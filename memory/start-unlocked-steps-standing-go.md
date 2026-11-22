@@ -16,3 +16,6 @@ User 2026-11-09: "in future start unlocked planned steps by yourself" (after I a
 AND ~/notes/dash/tasks.json "planned" cards' `after` lists (missed F2 on 11-09 by grepping ledgers only) for steps waiting on that PR; dash cards use keys group/key/owners/prefixes/now/next (not id/state); start them (agent or job, prio below DSpine), add the dash card, tell the user in one line.
 Covers PLANNED steps only — new ideas, posting/PRs outside existing standing gos, downloads, and model swaps still need
 a go. Respect usage state ([[usage-self-management]]) and the sharing check ([[tf-shared-code-across-families]]).
+
+**11-22 (user): "start by yourself when ressources free".** Approved steps wait in a queue file (current:
+~/notes/ledger/rebase-1122/NEXT.md) and start without asking once the GPU queue is light and disk ≥ 50 GB.
